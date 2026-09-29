@@ -2,8 +2,15 @@ import 'server-only';
 import { cache } from 'react';
 import { isDemo } from '@/lib/env';
 import { createClient } from '@/lib/supabase/server';
-import { demoCandidates, demoConnections, demoEvents, demoJoinedEventIds, demoViewer } from '@/lib/demo-data';
-import type { Candidate, Connection, EventInfo, Profile, Viewer } from '@/lib/types';
+import {
+  demoCandidates,
+  demoConnections,
+  demoEvents,
+  demoHostedEvents,
+  demoJoinedEventIds,
+  demoViewer,
+} from '@/lib/demo-data';
+import type { Candidate, Connection, EventInfo, HostedEvent, Profile, Viewer } from '@/lib/types';
 
 const PROFILE_COLUMNS =
   'id, first_name, last_name, job_title, company, industry, experience_years, location, bio, skills, networking_goals, avatar_url, role, summary, completed';
@@ -72,4 +79,14 @@ export async function getConnections(): Promise<Connection[]> {
     const { event_name, since, status, ...profile } = row;
     return { profile, event_name, since, status };
   });
+}
+
+export async function getHostedEvents(): Promise<HostedEvent[]> {
+  if (isDemo) return demoHostedEvents;
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc('hosted_events');
+  if (error) throw error;
+  const viewer = await getViewer();
+  const organizer = viewer?.profile ? `${viewer.profile.first_name} ${viewer.profile.last_name}` : '';
+  return (data ?? []).map((e: Omit<HostedEvent, 'organizer_name'>) => ({ ...e, organizer_name: organizer }));
 }

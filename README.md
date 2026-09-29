@@ -12,7 +12,7 @@ npm run dev
 ```
 
 With no environment variables the app runs on **sample data**: every screen works, sign-in accepts anything, and
-you are signed in as a sample user. Try the access codes `FOUNDRY26`, `GREENLEDGER` or `CLINICML` on `/events/join`.
+you are signed in as a sample user who can both attend and host events. Try the access codes `FOUNDRY26`, `GREENLEDGER` or `CLINICML` on `/events/join`.
 
 ## Connect real services
 
@@ -26,8 +26,9 @@ you are signed in as a sample user. Try the access codes `FOUNDRY26`, `GREENLEDG
 | `OPENAI_API_KEY` | Profile summaries and embeddings. Optional; without it profiles save but rank equally. |
 | `OPENAI_SUMMARY_MODEL` | Summary model, defaults to `gpt-4o-mini`. |
 
-Organizers are created by choosing "Hosting events" at sign-up. Events are inserted directly in Supabase for now (there
-is no organizer UI yet); `access_code` must be uppercase.
+Organizers are created by choosing "Hosting events" at sign-up. They get a **Hosting** tab (`/host`) listing their
+events with access codes, invite links and counts (joined, profiles ready, connections made), and can create events at
+`/host/new`. Codes are generated if left blank; times are entered in the event's own timezone.
 
 ## How matching works
 
@@ -51,7 +52,8 @@ app/
   profile/setup            onboarding and profile editing, with a live card preview
   (app)/dashboard          overview
   (app)/matches            Discover deck and Connections (?view=connections)
-  (app)/events/join        access-code lookup and join
+  (app)/events/join        access-code lookup and join (?code= prefills)
+  (app)/host, host/new     organizer event list and event creation
   actions.ts               all server actions
 components/                UI; landing/ and app/ hold page-specific pieces
 lib/                       data access, sample data, matching reasons, AI helper

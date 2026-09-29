@@ -1,4 +1,4 @@
-import type { Candidate, Connection, EventInfo, Profile, Viewer } from '@/lib/types';
+import type { Candidate, Connection, EventInfo, HostedEvent, Profile, Viewer } from '@/lib/types';
 
 // Sample data used when Supabase is not configured. Names, companies and events are fictional.
 
@@ -19,7 +19,8 @@ export const demoViewerProfile: Profile = {
   networking_goals:
     'Looking for design partners among lenders, an ML advisor for our risk models, and founders a year or two ahead of us on fundraising.',
   avatar_url: portrait('men', 85),
-  role: 'member',
+  // Organizer so the sample account can also show the hosting screens.
+  role: 'organizer',
   summary:
     'Product leader in fintech with nine years across payments and credit risk. Strongest on turning model output into lender-facing workflows. Wants design partners, an ML advisor, and candid fundraising advice.',
 };
@@ -71,6 +72,25 @@ export const demoEvents: EventInfo[] = [
     attendee_count: 44,
     max_attendees: 80,
     cover_url: photo(180, 1200, 800),
+  },
+];
+
+/** Events the demo viewer organizes. */
+export const demoHostedEvents: HostedEvent[] = [
+  {
+    id: 'evt-circle',
+    name: 'Lending Product Circle',
+    description: 'A monthly dinner for product leads at lenders and lending startups. Twelve seats, one topic.',
+    starts_at: '2026-10-29T18:00:00-07:00',
+    timezone: 'America/Los_Angeles',
+    location: 'Keel Risk office, 44 Tehama St, San Francisco',
+    access_code: 'LENDCIRCLE',
+    organizer_name: 'Tomás Ferreira',
+    attendee_count: 9,
+    max_attendees: 12,
+    cover_url: photo(163, 1200, 800),
+    profiles_ready: 7,
+    connections: 4,
   },
 ];
 

@@ -7,6 +7,7 @@ import { isDemo } from '@/lib/env';
 import { createClient } from '@/lib/supabase/server';
 import { demoEvents, demoPeople } from '@/lib/demo-data';
 import { summarizeProfile } from '@/lib/ai';
+import { isTimeZone, wallTimeToIso } from '@/lib/time';
 
 export type FormState = { error?: string; fieldErrors?: Record<string, string> } | undefined;
 
@@ -184,4 +185,68 @@ export async function respond(targetId: string, eventId: string, interested: boo
   if (error) return { mutual: false, error: 'Could not save that. Please try again.' };
   if (data) revalidatePath('/dashboard');
   return { mutual: Boolean(data) };
+}
+
+// Hosting -------------------------------------------------------------------
+
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O or 1/I
+
+function generateCode(length = 8) {
+  const bytes = crypto.getRandomValues(new Uint8Array(length));
+  return Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+}
+
+const blankToUndefined = (v: unknown) => (typeof v === 'string' && v.trim() === '' ? undefined : v);
+
+const eventSchema = z
+  .object({
+    name: z.string().trim().min(3, 'Give the event a name').max(80),
+    description: z.string().trim().max(400, 'Keep it under 400 characters').default(''),
+    starts_local: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Pick a date and time'),
+    timezone: z.string().refine(isTimeZone, 'Pick a timezone'),
+    location: z.string().trim().min(3, 'Add a venue or address').max(160),
+    max_attendees: z.preprocess(
+      blankToUndefined,
+      z.coerce.number().int('Whole numbers only').min(2, 'At least 2').max(5000, 'Up to 5,000').optional(),
+    ),
+    cover_url: z.preprocess(blankToUndefined, z.url('Use a full https:// link').optional()),
+    access_code: z.preprocess(
+      (v) => (typeof v === 'string' ? v.trim().toUpperCase() || undefined : v),
+      z
+        .string()
+        .regex(/^[A-Z0-9]{4,16}$/, '4 to 16 letters or numbers, no spaces')
+        .optional(),
+    ),
+  })
+  .transform(({ starts_local, ...rest }) => ({ ...rest, starts_at: wallTimeToIso(starts_local, rest.timezone) }))
+  .refine((e) => new Date(e.starts_at) > new Date(), { message: 'Pick a time in the future', path: ['starts_local'] });
+
+export async function createEvent(_: FormState, form: FormData): Promise<FormState> {
+  const parsed = eventSchema.safeParse(Object.fromEntries(form));
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  const { access_code, ...event } = parsed.data;
+
+  let code = access_code ?? generateCode();
+  if (!isDemo) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) redirect('/auth/login');
+
+    // A chosen code that is taken is the organizer's to fix; a generated one we retry.
+    for (let attempt = 0; ; attempt++) {
+      const { error } = await supabase
+        .from('events')
+        .insert({ ...event, access_code: code, organizer_id: user.id, max_attendees: event.max_attendees ?? null });
+      if (!error) break;
+      if (error.code !== '23505')
+        return { error: 'We could not create the event. Check that your account can host events.' };
+      if (access_code) return { fieldErrors: { access_code: 'Another event already uses this code' } };
+      if (attempt >= 4) return { error: 'We could not generate a unique code. Please try again.' };
+      code = generateCode();
+    }
+    revalidatePath('/host');
+  }
+  redirect(`/host?created=${code}`);
 }

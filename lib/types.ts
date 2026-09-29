@@ -31,6 +31,12 @@ export interface EventInfo {
   cover_url: string | null;
 }
 
+/** An event as its organizer sees it. */
+export interface HostedEvent extends EventInfo {
+  profiles_ready: number;
+  connections: number;
+}
+
 export interface Candidate extends Profile {
   similarity: number;
   event_id: string;

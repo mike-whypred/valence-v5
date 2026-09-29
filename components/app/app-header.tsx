@@ -13,7 +13,7 @@ export function AppHeader({ viewer }: { viewer: Viewer }) {
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 sm:px-6">
         <Brand href="/dashboard" className="shrink-0" />
         <div className="hidden min-w-0 flex-1 justify-center md:flex">
-          <NavLinks />
+          <NavLinks organizer={p?.role === 'organizer'} />
         </div>
         <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0">
           {isDemo && (
@@ -43,7 +43,7 @@ export function AppHeader({ viewer }: { viewer: Viewer }) {
         </div>
       </div>
       <div className="mx-auto max-w-6xl px-4 pb-3 sm:px-6 md:hidden">
-        <NavLinks />
+        <NavLinks organizer={p?.role === 'organizer'} />
       </div>
     </header>
   );

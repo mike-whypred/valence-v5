@@ -11,11 +11,13 @@ const links = [
   { href: '/profile/setup', label: 'Profile' },
 ];
 
-export function NavLinks() {
+const hostLink = { href: '/host', label: 'Hosting' };
+
+export function NavLinks({ organizer = false }: { organizer?: boolean }) {
   const pathname = usePathname();
   return (
     <nav aria-label="App" className="no-scrollbar -mx-1 flex items-center gap-1 overflow-x-auto">
-      {links.map((l) => {
+      {(organizer ? [...links.slice(0, 3), hostLink, links[3]] : links).map((l) => {
         const active = pathname.startsWith(l.href);
         return (
           <Link

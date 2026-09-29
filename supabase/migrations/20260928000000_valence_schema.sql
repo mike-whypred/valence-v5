@@ -274,5 +274,28 @@ language sql stable security definer set search_path = public as $$
   order by 16 desc;
 $$;
 
+-- RPC: events I organize, with attendance and outcome counts ---------------
+
+create or replace function public.hosted_events()
+returns table (
+  id uuid, name text, description text, starts_at timestamptz, timezone text, location text,
+  access_code text, max_attendees integer, cover_url text,
+  attendee_count bigint, profiles_ready bigint, connections bigint
+)
+language sql stable security definer set search_path = public as $$
+  select e.id, e.name, e.description, e.starts_at, e.timezone, e.location,
+         e.access_code, e.max_attendees, e.cover_url,
+         (select count(*) from event_attendees a where a.event_id = e.id),
+         (select count(*) from event_attendees a join profiles p on p.id = a.user_id
+           where a.event_id = e.id and p.completed),
+         -- each mutual pair is two rows; count it once
+         (select count(*) from interests i
+           join interests r on r.from_id = i.to_id and r.to_id = i.from_id and r.interested
+           where i.event_id = e.id and i.interested and i.from_id < i.to_id)
+  from events e
+  where e.organizer_id = auth.uid()
+  order by e.starts_at desc;
+$$;
+
 -- Vector index (add once you have a few thousand profiles):
 -- create index profiles_embedding_idx on public.profiles using hnsw (embedding vector_cosine_ops);
