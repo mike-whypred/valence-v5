@@ -1,56 +1,44 @@
-import * as React from 'react';
-import { Slot } from '@radix-ui/react-slot';
-import { cva, type VariantProps } from 'class-variance-authority';
-
+import Link from 'next/link';
+import type { ComponentProps } from 'react';
 import { cn } from '@/lib/utils';
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-  {
-    variants: {
-      variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        destructive:
-          'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        outline:
-          'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-        secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-      },
-      size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-md px-3',
-        lg: 'h-11 rounded-md px-8',
-        icon: 'h-10 w-10',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
-    },
-  }
-);
+type Variant = 'primary' | 'secondary' | 'ghost' | 'ember';
+type Size = 'sm' | 'md' | 'lg';
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+const base =
+  'inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full font-medium transition-[transform,background-color,color,box-shadow] duration-200 ease-out-expo active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50';
+
+const variants: Record<Variant, string> = {
+  primary: 'bg-ink text-canvas hover:bg-ink/85',
+  ember: 'bg-ember text-ember-ink hover:brightness-110',
+  secondary: 'bg-surface text-ink ring-1 ring-line hover:ring-ink/25',
+  ghost: 'text-muted hover:text-ink hover:bg-sunken',
+};
+
+const sizes: Record<Size, string> = {
+  sm: 'h-9 px-4 text-sm',
+  md: 'h-11 px-5 text-[15px]',
+  lg: 'h-13 px-7 text-base',
+};
+
+export function buttonClass(variant: Variant = 'primary', size: Size = 'md', className?: string) {
+  return cn(base, variants[variant], sizes[size], className);
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button';
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    );
-  }
-);
-Button.displayName = 'Button';
+export function Button({
+  variant,
+  size,
+  className,
+  ...props
+}: ComponentProps<'button'> & { variant?: Variant; size?: Size }) {
+  return <button className={buttonClass(variant, size, className)} {...props} />;
+}
 
-export { Button, buttonVariants };
+export function ButtonLink({
+  variant,
+  size,
+  className,
+  ...props
+}: ComponentProps<typeof Link> & { variant?: Variant; size?: Size }) {
+  return <Link className={buttonClass(variant, size, className)} {...props} />;
+}
